@@ -1,0 +1,28 @@
+name: Database Migration & Seed
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Migration action to execute'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - 'upgrade'
+          - 'current'
+          - 'history'
+
+jobs:
+  migrate:
+    uses: dipeshsingh2012/shared-workflows/.github/workflows/db-migration.yml@main
+    with:
+      python_version: '3.11'
+      migration_action: ${{ inputs.action || 'upgrade' }}
+      run_seed: true
+      seed_command: 'python -m src.db.seed'
+    secrets:
+      SQL_DB: ${{ secrets.SQL_DB || secrets.DATABASE_URL }}
