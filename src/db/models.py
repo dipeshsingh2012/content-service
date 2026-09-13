@@ -45,5 +45,28 @@ class CMSSiteShell(Base):
     promo_bar = Column(JSON_TYPE, nullable=False, default=dict)
     header = Column(JSON_TYPE, nullable=False, default=dict)
     footer = Column(JSON_TYPE, nullable=False, default=dict)
+    theme = Column(JSON_TYPE, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
+
+
+class CMSThemePreset(Base):
+    __tablename__ = "cms_theme_presets"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    preset = Column(String, unique=True, nullable=False, index=True)
+    mode = Column(String, nullable=False, default="light")
+    primary_color = Column(String, nullable=False)
+    accent_color = Column(String, nullable=False)
+    surface_color = Column(String, nullable=False)
+    background_color = Column(String, nullable=False)
+    text_color = Column(String, nullable=False)
+    font_family = Column(String, nullable=False, default="sans")
+    border_radius = Column(String, nullable=False, default="rounded-2xl")
+    badge_text = Column(String, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=False)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
+

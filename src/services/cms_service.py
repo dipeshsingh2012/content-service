@@ -4,8 +4,8 @@ from typing import List, Optional, Tuple
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import CMSPage, CMSSiteShell
-from src.db.seed import DEFAULT_GLOBAL_SHELL, seed_cms_data
+from src.db.models import CMSPage, CMSSiteShell, CMSThemePreset
+from src.db.seed import DEFAULT_GLOBAL_SHELL, DEFAULT_THEME_PRESETS_LIST, seed_cms_data
 from src.schemas.cms import CMSPageCreate, CMSPageUpdate, GlobalShellUpdate
 
 
@@ -26,8 +26,13 @@ class CMSService:
                 promo_bar=DEFAULT_GLOBAL_SHELL["promo_bar"],
                 header=DEFAULT_GLOBAL_SHELL["header"],
                 footer=DEFAULT_GLOBAL_SHELL["footer"],
+                theme=DEFAULT_GLOBAL_SHELL["theme"],
             )
             self.db.add(shell)
+            await self.db.commit()
+            await self.db.refresh(shell)
+        elif not shell.theme:
+            shell.theme = DEFAULT_GLOBAL_SHELL["theme"]
             await self.db.commit()
             await self.db.refresh(shell)
         return shell
@@ -36,7 +41,7 @@ class CMSService:
         shell = await self.get_shell()
         update_data = payload.model_dump(exclude_unset=True)
 
-        for field in ["promo_bar", "header", "footer"]:
+        for field in ["promo_bar", "header", "footer", "theme"]:
             if field in update_data and update_data[field] is not None:
                 val = update_data[field]
                 setattr(shell, field, val.model_dump() if hasattr(val, "model_dump") else val)
@@ -44,6 +49,27 @@ class CMSService:
         await self.db.commit()
         await self.db.refresh(shell)
         return shell
+
+    # ----------------------------------------------------
+    # Theme Presets Operations (PostgreSQL-backed)
+    # ----------------------------------------------------
+    async def get_theme_presets(self) -> List[CMSThemePreset]:
+        stmt = select(CMSThemePreset).order_by(CMSThemePreset.sort_order.asc())
+        res = await self.db.execute(stmt)
+        presets = res.scalars().all()
+        if not presets:
+            for preset_data in DEFAULT_THEME_PRESETS_LIST:
+                preset = CMSThemePreset(**preset_data)
+                self.db.add(preset)
+            await self.db.commit()
+            res = await self.db.execute(stmt)
+            presets = res.scalars().all()
+        return list(presets)
+
+    async def get_theme_preset(self, preset_key: str) -> Optional[CMSThemePreset]:
+        stmt = select(CMSThemePreset).where(CMSThemePreset.preset == preset_key)
+        res = await self.db.execute(stmt)
+        return res.scalar_one_or_none()
 
     # ----------------------------------------------------
     # CMS Pages Operations

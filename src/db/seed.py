@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.models import ContentLane, CMSPage, CMSSiteShell
+from src.db.models import ContentLane, CMSPage, CMSSiteShell, CMSThemePreset
 
 SEED_LANES = [
     {
@@ -169,6 +169,7 @@ DEFAULT_GLOBAL_SHELL = {
         "brand_name": "Hiljhil Roasters",
         "brand_tagline": "Specialty Sourced & Micro-Lot Roasted",
         "brand_badge": "FLAGSHIP ROASTERY",
+        "logo_url": "/logo.jpg",
         "show_search": True,
         "show_cart": True,
         "show_spatial_finder": True,
@@ -305,15 +306,129 @@ DEFAULT_GLOBAL_SHELL = {
         ],
         "copyright": "© 2026 Hiljhil Roasters Co. All rights reserved. Precision-crafted for specialty coffee devotees.",
     },
+    "theme": {
+        "id": "theme_hill_jhil_alpine",
+        "name": "Hill Jhil Alpine Tarn",
+        "preset": "alpine",
+        "mode": "light",
+        "primary_color": "#085454",
+        "accent_color": "#0d9488",
+        "surface_color": "#ffffff",
+        "background_color": "#f0fdfa",
+        "text_color": "#042f2e",
+        "font_family": "serif",
+        "border_radius": "rounded-2xl",
+        "badge_text": "ALPINE ESTATE HARVEST",
+        "is_active": True,
+    },
 }
+
+DEFAULT_THEME_PRESETS_LIST = [
+    {
+        "id": "theme_hill_jhil_alpine",
+        "name": "Hill Jhil Alpine Tarn",
+        "preset": "alpine",
+        "mode": "light",
+        "primary_color": "#085454",
+        "accent_color": "#0d9488",
+        "surface_color": "#ffffff",
+        "background_color": "#f0fdfa",
+        "text_color": "#042f2e",
+        "font_family": "serif",
+        "border_radius": "rounded-2xl",
+        "badge_text": "ALPINE ESTATE HARVEST",
+        "is_active": True,
+        "sort_order": 1,
+    },
+    {
+        "id": "theme_warm_amber",
+        "name": "Warm Amber Roast",
+        "preset": "amber",
+        "mode": "light",
+        "primary_color": "#92400e",
+        "accent_color": "#f59e0b",
+        "surface_color": "#ffffff",
+        "background_color": "#fbf9f6",
+        "text_color": "#1c1917",
+        "font_family": "serif",
+        "border_radius": "rounded-2xl",
+        "badge_text": "FLAGSHIP HARVEST",
+        "is_active": False,
+        "sort_order": 2,
+    },
+    {
+        "id": "theme_midnight_espresso",
+        "name": "Midnight Espresso",
+        "preset": "espresso",
+        "mode": "dark",
+        "primary_color": "#1c1917",
+        "accent_color": "#d97706",
+        "surface_color": "#18181b",
+        "background_color": "#09090b",
+        "text_color": "#f4f4f5",
+        "font_family": "sans",
+        "border_radius": "rounded-xl",
+        "badge_text": "BARISTA NIGHTS",
+        "is_active": False,
+        "sort_order": 3,
+    },
+    {
+        "id": "theme_highland_emerald",
+        "name": "Highland Emerald",
+        "preset": "emerald",
+        "mode": "light",
+        "primary_color": "#064e3b",
+        "accent_color": "#10b981",
+        "surface_color": "#ffffff",
+        "background_color": "#f0fdf4",
+        "text_color": "#064e3b",
+        "font_family": "sans",
+        "border_radius": "rounded-2xl",
+        "badge_text": "ESTATE ORIGINS",
+        "is_active": False,
+        "sort_order": 4,
+    },
+    {
+        "id": "theme_berry_crimson",
+        "name": "Berry Crimson Velvet",
+        "preset": "crimson",
+        "mode": "light",
+        "primary_color": "#881337",
+        "accent_color": "#f43f5e",
+        "surface_color": "#ffffff",
+        "background_color": "#fff1f2",
+        "text_color": "#4c0519",
+        "font_family": "serif",
+        "border_radius": "rounded-2xl",
+        "badge_text": "LIMITED NANO-LOT",
+        "is_active": False,
+        "sort_order": 5,
+    },
+    {
+        "id": "theme_modern_slate",
+        "name": "Modern Minimal Slate",
+        "preset": "slate",
+        "mode": "light",
+        "primary_color": "#0f172a",
+        "accent_color": "#64748b",
+        "surface_color": "#ffffff",
+        "background_color": "#f8fafc",
+        "text_color": "#0f172a",
+        "font_family": "sans",
+        "border_radius": "rounded-lg",
+        "badge_text": "PRECISION LAB",
+        "is_active": False,
+        "sort_order": 6,
+    },
+]
 
 DEFAULT_CMS_PAGES = [
     {
         "id": "page_home",
         "page_type": "home",
-        "title": "Storefront Flagship Homepage",
+        "title": "Hill Jhil Homepage",
         "slug": "/",
-        "description": "Main flagship storefront landing experience featuring hero banner, origin lanes, and spatial discovery.",
+        "description": "Main flagship landing experience featuring hero banner, origin lanes, and spatial discovery.",
         "is_published": True,
         "sections": [
             {
@@ -757,12 +872,14 @@ async def seed_cms_data(db: AsyncSession, force_reset: bool = False):
         existing_shell.promo_bar = DEFAULT_GLOBAL_SHELL["promo_bar"]
         existing_shell.header = DEFAULT_GLOBAL_SHELL["header"]
         existing_shell.footer = DEFAULT_GLOBAL_SHELL["footer"]
+        existing_shell.theme = DEFAULT_GLOBAL_SHELL["theme"]
     elif not existing_shell:
         shell = CMSSiteShell(
             id="default",
             promo_bar=DEFAULT_GLOBAL_SHELL["promo_bar"],
             header=DEFAULT_GLOBAL_SHELL["header"],
             footer=DEFAULT_GLOBAL_SHELL["footer"],
+            theme=DEFAULT_GLOBAL_SHELL["theme"],
         )
         db.add(shell)
 
@@ -780,19 +897,42 @@ async def seed_cms_data(db: AsyncSession, force_reset: bool = False):
             page = CMSPage(**page_data)
             db.add(page)
 
+    # 3. Seed or reset CMSThemePresets
+    if force_reset:
+        presets_res = await db.execute(select(CMSThemePreset))
+        for p in presets_res.scalars().all():
+            await db.delete(p)
+        await db.flush()
+
+    for preset_data in DEFAULT_THEME_PRESETS_LIST:
+        res = await db.execute(select(CMSThemePreset).where(CMSThemePreset.preset == preset_data["preset"]))
+        existing_preset = res.scalar_one_or_none()
+        if not existing_preset:
+            preset = CMSThemePreset(**preset_data)
+            db.add(preset)
+        elif force_reset:
+            for key, val in preset_data.items():
+                setattr(existing_preset, key, val)
+
     await db.commit()
 
 
 if __name__ == "__main__":
     import asyncio
-    from src.db.database import get_db
+    from sqlalchemy import text
+    from src.db.database import get_db, engine, Base
 
     async def main():
+        async with engine.begin() as conn:
+            await conn.execute(text("ALTER TABLE cms_site_shell ADD COLUMN IF NOT EXISTS theme JSONB DEFAULT '{}'::jsonb;"))
+            await conn.run_sync(Base.metadata.create_all)
+        print("Schema verified: cms_site_shell.theme & cms_theme_presets table ready.")
+
         async for session in get_db():
             await seed_content_lanes(session)
             print("Successfully seeded content lanes into PostgreSQL!")
-            await seed_cms_data(session)
-            print("Successfully seeded CMS site shell & pages into PostgreSQL!")
+            await seed_cms_data(session, force_reset=True)
+            print("Successfully seeded CMS site shell, theme presets & pages into PostgreSQL!")
             break
 
     asyncio.run(main())

@@ -16,6 +16,7 @@ from src.schemas.cms import (
     GlobalShellUpdate,
     HeaderConfig,
     PromoBarConfig,
+    ThemeConfig,
 )
 from src.services.cms_service import CMSService
 
@@ -228,6 +229,65 @@ async def update_cms_footer(payload: FooterConfig, db: AsyncSession = Depends(ge
     service = CMSService(db)
     shell = await service.update_shell(GlobalShellUpdate(footer=payload))
     return FooterConfig.model_validate(shell.footer)
+
+
+@router.get(
+    "/cms/shell/theme-presets",
+    response_model=List[ThemeConfig],
+    tags=["CMS Global Shell"],
+    summary="Get all available theme presets backed by PostgreSQL",
+)
+@router.get(
+    "/cms/theme-presets",
+    response_model=List[ThemeConfig],
+    tags=["CMS Global Shell"],
+    summary="Get all available theme presets backed by PostgreSQL (alias)",
+)
+async def get_cms_theme_presets(db: AsyncSession = Depends(get_db)):
+    service = CMSService(db)
+    presets = await service.get_theme_presets()
+    return [
+        ThemeConfig(
+            id=p.id,
+            name=p.name,
+            preset=p.preset,
+            mode=p.mode,
+            primary_color=p.primary_color,
+            accent_color=p.accent_color,
+            surface_color=p.surface_color,
+            background_color=p.background_color,
+            text_color=p.text_color,
+            font_family=p.font_family,
+            border_radius=p.border_radius,
+            badge_text=p.badge_text,
+            is_active=p.is_active,
+        )
+        for p in presets
+    ]
+
+
+@router.get(
+    "/cms/shell/theme",
+    response_model=ThemeConfig,
+    tags=["CMS Global Shell"],
+    summary="Get active store theme and visual styling configuration",
+)
+async def get_cms_theme(db: AsyncSession = Depends(get_db)):
+    service = CMSService(db)
+    shell = await service.get_shell()
+    return ThemeConfig.model_validate(shell.theme)
+
+
+@router.put(
+    "/cms/shell/theme",
+    response_model=ThemeConfig,
+    tags=["CMS Global Shell"],
+    summary="Update active store theme and visual styling configuration",
+)
+async def update_cms_theme(payload: ThemeConfig, db: AsyncSession = Depends(get_db)):
+    service = CMSService(db)
+    shell = await service.update_shell(GlobalShellUpdate(theme=payload))
+    return ThemeConfig.model_validate(shell.theme)
 
 
 # ====================================================

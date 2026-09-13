@@ -36,6 +36,7 @@ class HeaderConfig(BaseModel):
     brand_name: str
     brand_tagline: Optional[str] = None
     brand_badge: Optional[str] = None
+    logo_url: Optional[str] = "/logo.jpg"
     nodes: List[NavNode] = Field(default_factory=list)
     show_search: bool = True
     show_cart: bool = True
@@ -81,10 +82,54 @@ class FooterConfig(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+ThemePreset = Literal["alpine", "amber", "espresso", "emerald", "crimson", "slate"]
+ThemeMode = Literal["light", "dark", "system"]
+FontFamily = Literal["sans", "serif", "mono"]
+BorderRadius = Literal["rounded-none", "rounded-lg", "rounded-xl", "rounded-2xl", "rounded-full"]
+
+
+class ThemeConfig(BaseModel):
+    id: str = "theme_hill_jhil_alpine"
+    name: str = "Hill Jhil Alpine Tarn"
+    preset: ThemePreset = "alpine"
+    mode: ThemeMode = "light"
+    primary_color: str = "#085454"
+    accent_color: str = "#0d9488"
+    surface_color: str = "#ffffff"
+    background_color: str = "#f0fdfa"
+    text_color: str = "#042f2e"
+    font_family: FontFamily = "serif"
+    border_radius: BorderRadius = "rounded-2xl"
+    badge_text: Optional[str] = "ALPINE ESTATE HARVEST"
+    is_active: bool = True
+    updated_at: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ThemeConfigUpdate(BaseModel):
+    id: Optional[str] = None
+    name: Optional[str] = None
+    preset: Optional[ThemePreset] = None
+    mode: Optional[ThemeMode] = None
+    primary_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    surface_color: Optional[str] = None
+    background_color: Optional[str] = None
+    text_color: Optional[str] = None
+    font_family: Optional[FontFamily] = None
+    border_radius: Optional[BorderRadius] = None
+    badge_text: Optional[str] = None
+    is_active: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GlobalShellConfig(BaseModel):
     promo_bar: PromoBarConfig
     header: HeaderConfig
     footer: FooterConfig
+    theme: Optional[ThemeConfig] = Field(default_factory=ThemeConfig)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -101,6 +146,7 @@ class GlobalShellUpdate(BaseModel):
     promo_bar: Optional[PromoBarConfig] = None
     header: Optional[HeaderConfig] = None
     footer: Optional[FooterConfig] = None
+    theme: Optional[ThemeConfig] = None
 
     model_config = ConfigDict(from_attributes=True)
 

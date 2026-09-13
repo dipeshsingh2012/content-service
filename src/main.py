@@ -10,12 +10,26 @@ from src.db.database import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.DATABASE_URL:
+        try:
+            from sqlalchemy import text
+            from src.db.database import Base, get_sessionmaker
+            from src.db.seed import seed_cms_data
+            async with engine.begin() as conn:
+                await conn.execute(text("ALTER TABLE cms_site_shell ADD COLUMN IF NOT EXISTS theme JSONB DEFAULT '{}'::jsonb;"))
+                await conn.run_sync(Base.metadata.create_all)
+            session_factory = get_sessionmaker()
+            async with session_factory() as session:
+                await seed_cms_data(session)
+        except Exception as e:
+            print(f"Startup DB init warning: {e}")
     yield
     if settings.DATABASE_URL:
         try:
             await engine.dispose()
         except Exception:
             pass
+
 
 
 
