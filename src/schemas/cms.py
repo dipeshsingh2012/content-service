@@ -109,7 +109,7 @@ class GlobalShellUpdate(BaseModel):
 # CMS Page & Section Schemas
 # ==========================================
 
-PageType = Literal["home", "collection", "discovery", "static"]
+PageType = Literal["home", "product", "collection", "discovery", "static"]
 
 SectionType = Literal[
     "hero_banner",

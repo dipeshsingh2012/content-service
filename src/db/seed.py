@@ -557,6 +557,62 @@ DEFAULT_CMS_PAGES = [
         ],
     },
     {
+        "id": "page_product_default",
+        "page_type": "product",
+        "title": "Product Detail Page (PDP)",
+        "slug": "/products/:id",
+        "description": "Universal product page layout template automatically rendered across all catalog items (espresso gear, whole bean coffees, accessories).",
+        "is_published": True,
+        "sections": [
+            {
+                "id": "sec_pdp_overview",
+                "type": "product_lane",
+                "title": "Product Media Showcase & Specs",
+                "subtitle": "High-res media carousel, buy box, and CounterCheck™ clearance metrics",
+                "is_active": True,
+                "sort_order": 1,
+                "config": {
+                    "card_style": "slider",
+                    "display_count": 4,
+                    "show_badges": True,
+                    "enable_quick_add": True,
+                },
+            },
+            {
+                "id": "sec_pdp_pairing",
+                "type": "product_lane",
+                "title": "Recommended Roaster Pairings",
+                "subtitle": "Fresh whole bean lots and precision companion tools",
+                "is_active": True,
+                "sort_order": 2,
+                "config": {
+                    "filter_category": "coffee_beans",
+                    "card_style": "slider",
+                    "limit": 4,
+                },
+            },
+            {
+                "id": "sec_pdp_reviews",
+                "type": "testimonials",
+                "title": "Devotee Extraction Reviews",
+                "subtitle": "Grind calibration notes and home barista feedback",
+                "is_active": True,
+                "sort_order": 3,
+                "config": {
+                    "testimonials": [
+                        {
+                            "id": "pdp_test_1",
+                            "author": "Marcus V.",
+                            "role": "Verified Home Barista",
+                            "rating": 5,
+                            "quote": "Extremely consistent extraction with zero channeling. The spatial tolerance matched my kitchen cabinet height exactly.",
+                        }
+                    ]
+                },
+            },
+        ],
+    },
+    {
         "id": "page_discovery",
         "page_type": "discovery",
         "title": "CounterCheck™ Spatial Fitment Discovery",
