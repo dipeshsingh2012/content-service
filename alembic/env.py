@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.config import settings
 from src.db.database import Base
-from src.db.models import ContentLane  # Ensure models are registered
+from src.db.models import ContentLane, CMSPage, CMSSiteShell  # Ensure models are registered
 
 config = context.config
 

@@ -1,24 +1,50 @@
 import unittest
 from httpx import AsyncClient, ASGITransport
-import src.db.database as db_module
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from src.db.database import Base, get_db
+from src.db.seed import seed_content_lanes
 from src.main import app
+
+test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+TestSessionLocal = async_sessionmaker(
+    bind=test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+async def override_get_db():
+    async with TestSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 class TestContentServiceLanes(unittest.IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls):
+        app.dependency_overrides[get_db] = override_get_db
+
+    @classmethod
+    def tearDownClass(cls):
+        app.dependency_overrides.clear()
+
     async def asyncSetUp(self):
-        if db_module._engine is not None:
-            await db_module._engine.dispose()
-            db_module._engine = None
-            db_module._AsyncSessionLocal = None
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        async with TestSessionLocal() as session:
+            await seed_content_lanes(session)
 
     async def asyncTearDown(self):
-        if db_module._engine is not None:
-            await db_module._engine.dispose()
-            db_module._engine = None
-            db_module._AsyncSessionLocal = None
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
 
     async def test_health(self):
-
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             res = await client.get("/api/v1/health")

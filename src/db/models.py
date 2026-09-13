@@ -20,7 +20,30 @@ class ContentLane(Base):
     status = Column(String, nullable=False, default="active", index=True)  # active, draft, archived
     sort_order = Column(Integer, default=0)
     items = Column(JSON_TYPE, nullable=False, default=list)  # list of item dicts
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
+
+
+class CMSPage(Base):
+    __tablename__ = "cms_pages"
+
+    id = Column(String, primary_key=True, index=True)
+    page_type = Column(String, nullable=False, default="static", index=True)  # home, collection, discovery, static
+    title = Column(String, nullable=False, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    is_published = Column(Boolean, nullable=False, default=True, index=True)
+    sections = Column(JSON_TYPE, nullable=False, default=list)  # list of section dicts
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
+
+
+class CMSSiteShell(Base):
+    __tablename__ = "cms_site_shell"
+
+    id = Column(String, primary_key=True, default="default")  # Singleton key 'default'
+    promo_bar = Column(JSON_TYPE, nullable=False, default=dict)
+    header = Column(JSON_TYPE, nullable=False, default=dict)
+    footer = Column(JSON_TYPE, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
