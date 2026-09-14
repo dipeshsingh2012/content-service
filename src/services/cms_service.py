@@ -9,6 +9,17 @@ from src.db.seed import DEFAULT_GLOBAL_SHELL, DEFAULT_THEME_PRESETS_LIST, seed_c
 from src.schemas.cms import CMSPageCreate, CMSPageUpdate, GlobalShellUpdate
 
 
+def _sanitize_shell_urls(data):
+    if isinstance(data, dict):
+        return {
+            k: (v.replace("#/", "/") if k in ("url", "cta_url") and isinstance(v, str) and v.startswith("#/") else _sanitize_shell_urls(v))
+            for k, v in data.items()
+        }
+    elif isinstance(data, list):
+        return [_sanitize_shell_urls(item) for item in data]
+    return data
+
+
 class CMSService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -23,18 +34,34 @@ class CMSService:
         if not shell:
             shell = CMSSiteShell(
                 id="default",
-                promo_bar=DEFAULT_GLOBAL_SHELL["promo_bar"],
-                header=DEFAULT_GLOBAL_SHELL["header"],
-                footer=DEFAULT_GLOBAL_SHELL["footer"],
+                promo_bar=_sanitize_shell_urls(DEFAULT_GLOBAL_SHELL["promo_bar"]),
+                header=_sanitize_shell_urls(DEFAULT_GLOBAL_SHELL["header"]),
+                footer=_sanitize_shell_urls(DEFAULT_GLOBAL_SHELL["footer"]),
                 theme=DEFAULT_GLOBAL_SHELL["theme"],
             )
             self.db.add(shell)
             await self.db.commit()
             await self.db.refresh(shell)
-        elif not shell.theme:
-            shell.theme = DEFAULT_GLOBAL_SHELL["theme"]
-            await self.db.commit()
-            await self.db.refresh(shell)
+        else:
+            changed = False
+            if not shell.theme:
+                shell.theme = DEFAULT_GLOBAL_SHELL["theme"]
+                changed = True
+            sanitized_header = _sanitize_shell_urls(shell.header)
+            if sanitized_header != shell.header:
+                shell.header = sanitized_header
+                changed = True
+            sanitized_promo = _sanitize_shell_urls(shell.promo_bar)
+            if sanitized_promo != shell.promo_bar:
+                shell.promo_bar = sanitized_promo
+                changed = True
+            sanitized_footer = _sanitize_shell_urls(shell.footer)
+            if sanitized_footer != shell.footer:
+                shell.footer = sanitized_footer
+                changed = True
+            if changed:
+                await self.db.commit()
+                await self.db.refresh(shell)
         return shell
 
     async def update_shell(self, payload: GlobalShellUpdate) -> CMSSiteShell:
