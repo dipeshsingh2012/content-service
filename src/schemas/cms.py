@@ -165,6 +165,8 @@ SectionType = Literal[
     "product_grid",
     "testimonials",
     "promo_callout",
+    "feature_grid",
+    "rich_text",
 ]
 
 
